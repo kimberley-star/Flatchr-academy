@@ -79,6 +79,8 @@
     color:var(--ink);
   }
   .id-card input:focus{ outline:2px solid var(--teal); outline-offset:1px; }
+  .id-error{ color:#B3261E; font-size:0.82rem; margin:-6px 0 12px; text-align:left; }
+  [hidden]{ display:none !important; }
   .btn{
     background:var(--teal-dark);
     color:white;
@@ -265,6 +267,8 @@
   .player-panel h3{ font-size:1rem; }
   .video-wrap{
     position:relative;
+    color:white;
+    text-decoration:none;
     padding-bottom:42%;
     height:0;
     border-radius:10px;
@@ -339,8 +343,9 @@
   <div class="id-card">
     <div class="brand">Flatchr</div>
     <h1>Flatchr Académie</h1>
-    <p>Entre ton prénom pour retrouver ta progression (ou en démarrer une nouvelle).</p>
-    <input type="text" id="name-input" placeholder="Ton prénom" autocomplete="off">
+    <p>Entre ton adresse email pour retrouver ta progression (ou en démarrer une nouvelle).</p>
+    <input type="email" id="name-input" placeholder="prenom.nom@entreprise.fr" autocomplete="email" inputmode="email">
+    <div class="id-error" id="id-error" hidden>Saisis une adresse email valide (ex : prenom.nom@entreprise.fr).</div>
     <button class="btn" id="start-btn">Accéder à mes formations</button>
   </div>
 </div>
@@ -486,12 +491,25 @@
   const clearSearchBtn = document.getElementById('clear-search');
   const roleChips = document.getElementById('role-chips');
 
-  function storageKey(name){ return 'progress:' + name.toLowerCase().trim(); }
+  function storageKey(email){ return 'progress:' + email.toLowerCase().trim(); }
 
-  async function loadProgress(name){
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+  // Prénom déduit de l'email : "marie.dupont@..." -> "Marie"
+  function firstNameFromEmail(email){
+    const local = email.split('@')[0].split(/[._-]/)[0] || email;
+    return local.charAt(0).toUpperCase() + local.slice(1).toLowerCase();
+  }
+
+  // window.storage (projets Claude) si dispo, sinon stockage du navigateur
+  async function loadProgress(email){
     try{
-      const res = await window.storage.get(storageKey(name), false);
-      progress = res ? JSON.parse(res.value) : {};
+      if(window.storage){
+        const res = await window.storage.get(storageKey(email), false);
+        progress = res ? JSON.parse(res.value) : {};
+      } else {
+        progress = JSON.parse(localStorage.getItem(storageKey(email)) || '{}');
+      }
     }catch(e){
       progress = {};
     }
@@ -499,7 +517,12 @@
 
   async function saveProgress(){
     try{
-      await window.storage.set(storageKey(currentName), JSON.stringify(progress), false);
+      const value = JSON.stringify(progress);
+      if(window.storage){
+        await window.storage.set(storageKey(currentName), value, false);
+      } else {
+        localStorage.setItem(storageKey(currentName), value);
+      }
     }catch(e){
       console.error('Impossible d’enregistrer la progression', e);
     }
@@ -546,7 +569,7 @@
   }
 
   function render(){
-    userNameEl.textContent = currentName;
+    userNameEl.textContent = firstNameFromEmail(currentName);
     globalPct.textContent = computePct(allVideos()) + '%';
     list.innerHTML = '';
 
@@ -634,6 +657,9 @@
         const panel = document.createElement('div');
         panel.className = 'player-panel';
         panel.id = 'panel-' + openVideo.id;
+        const watchUrl = openVideo.youtubeId
+          ? 'https://www.youtube.com/watch?v=' + openVideo.youtubeId
+          : 'https://www.loom.com/share/' + openVideo.loomId;
         const learnMoreHtml = (openVideo.learnMore && openVideo.learnMore.length)
           ? `<div class="learn-more">
                <div class="lm-label">Pour aller plus loin</div>
@@ -646,7 +672,7 @@
             <span class="role-tag ${openVideo.role}">${roleLabel(openVideo.role)}</span>
           </div>
           <p class="video-summary">${openVideo.summary || ''}</p>
-          <div class="video-wrap" role="button" tabindex="0" aria-label="Ouvrir la vidéo ${openVideo.title}">
+          <a class="video-wrap" href="${watchUrl}" target="_blank" rel="noopener" aria-label="Ouvrir la vidéo ${openVideo.title}">
             <div class="watch-inner">
               <span class="play-circle">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
@@ -654,7 +680,7 @@
               <span class="watch-label">Regarder la vidéo</span>
               <span class="watch-source">${openVideo.youtubeId ? 'Ouvre sur YouTube' : 'Ouvre sur Loom'}</span>
             </div>
-          </div>
+          </a>
           ${learnMoreHtml}
           <label class="mark-done">
             <input type="checkbox" ${progress[openVideo.id] ? 'checked' : ''} data-video="${openVideo.id}">
@@ -662,15 +688,6 @@
           </label>
         `;
         card.appendChild(panel);
-        const watchUrl = openVideo.youtubeId
-          ? 'https://www.youtube.com/watch?v=' + openVideo.youtubeId
-          : 'https://www.loom.com/share/' + openVideo.loomId;
-        const watchTile = panel.querySelector('.video-wrap');
-        const openVideoTab = () => window.open(watchUrl, '_blank', 'noopener');
-        watchTile.addEventListener('click', openVideoTab);
-        watchTile.addEventListener('keydown', (e) => {
-          if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openVideoTab(); }
-        });
         panel.querySelector('input').addEventListener('change', async (e) => {
           progress[openVideo.id] = e.target.checked;
           await saveProgress();
@@ -687,10 +704,12 @@
   }
 
   async function start(){
-    const name = nameInput.value.trim();
-    if(!name) { nameInput.focus(); return; }
-    currentName = name;
-    await loadProgress(name);
+    const email = nameInput.value.trim().toLowerCase();
+    const idError = document.getElementById('id-error');
+    if(!EMAIL_RE.test(email)){ idError.hidden = false; nameInput.focus(); return; }
+    idError.hidden = true;
+    currentName = email;
+    await loadProgress(email);
     idScreen.style.display = 'none';
     app.style.display = 'block';
     render();
@@ -720,8 +739,17 @@
     });
   });
 
+  // Double clic de confirmation (confirm() est bloqué dans certains affichages)
+  let resetArmed = false;
   resetBtn.addEventListener('click', async () => {
-    if(!confirm('Réinitialiser toute ta progression ?')) return;
+    if(!resetArmed){
+      resetArmed = true;
+      resetBtn.textContent = 'Clique à nouveau pour confirmer la réinitialisation';
+      setTimeout(() => { resetArmed = false; resetBtn.textContent = 'Réinitialiser ma progression'; }, 4000);
+      return;
+    }
+    resetArmed = false;
+    resetBtn.textContent = 'Réinitialiser ma progression';
     progress = {};
     openStep = {};
     await saveProgress();
