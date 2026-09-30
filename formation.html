@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flatchr Académie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  /* Palette Flatchr : teal #01AEC8 / #019BB2 / #016D7D · orange #FF9C11 · navy #12435E */
+  :root{
+    --bg: #F1F8FA;
+    --paper: #FFFFFF;
+    --ink: #12435E;
+    --ink-soft: #4F6B7B;
+    --line: #D2E5EB;
+    --teal: #01AEC8;
+    --teal-mid: #019BB2;
+    --teal-dark: #016D7D;
+    --navy: #12435E;
+    --orange: #FF9C11;
+    --teal-tint: #DDF3F7;
+    --orange-tint: #FFEFD6;
+    --field: #F7FBFC;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{ font-family:'Fraunces', serif; font-weight:600; margin:0; }
+  .mono{ font-family:'IBM Plex Mono', monospace; letter-spacing:0.02em; }
+
+  .brand{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.08em;
+    color:var(--teal-dark);
+    margin-bottom:12px;
+  }
+  .brand::before{
+    content:''; width:10px; height:10px; border-radius:50%;
+    background:var(--orange);
+  }
+
+  /* ---------- Ecran d'identification ---------- */
+  #id-screen{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    background:linear-gradient(160deg, var(--bg) 0%, var(--teal-tint) 100%);
+  }
+  .id-card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-top:4px solid var(--teal);
+    border-radius:16px;
+    padding:40px 32px;
+    max-width:380px;
+    width:100%;
+    text-align:center;
+    box-shadow:0 10px 30px rgba(18,67,94,0.08);
+  }
+  .id-card h1{ font-size:1.6rem; margin-bottom:8px; }
+  .id-card p{ color:var(--ink-soft); font-size:0.92rem; margin-bottom:24px; line-height:1.5; }
+  .id-card input{
+    width:100%;
+    padding:12px 14px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    font-family:'Inter', sans-serif;
+    font-size:1rem;
+    margin-bottom:14px;
+    background:var(--field);
+    color:var(--ink);
+  }
+  .id-card input:focus{ outline:2px solid var(--teal); outline-offset:1px; }
+  .btn{
+    background:var(--teal-dark);
+    color:white;
+    border:none;
+    padding:12px 20px;
+    border-radius:10px;
+    font-family:'Inter', sans-serif;
+    font-weight:600;
+    font-size:0.95rem;
+    cursor:pointer;
+    width:100%;
+    transition:background 0.2s ease;
+  }
+  .btn:hover{ background:var(--navy); }
+  .btn:focus-visible{ outline:2px solid var(--orange); outline-offset:2px; }
+
+  /* ---------- App ---------- */
+  #app{ display:none; max-width:840px; margin:0 auto; padding:32px 20px 80px; }
+  header.top{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    margin-bottom:22px;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  header.top .greet{ color:var(--ink-soft); font-size:0.9rem; margin-bottom:4px; }
+  header.top h1{ font-size:1.9rem; }
+  .global-progress{ text-align:right; }
+  .global-progress .pct{ font-size:1.8rem; font-family:'Fraunces', serif; font-weight:700; color:var(--teal-mid); }
+  .global-progress .label{ font-size:0.78rem; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.06em; }
+
+  /* ---------- Barre de recherche + filtre ---------- */
+  .toolbar{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px 18px;
+    margin-bottom:22px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    align-items:center;
+  }
+  .search-box{
+    flex:1;
+    min-width:200px;
+    position:relative;
+  }
+  .search-box input{
+    width:100%;
+    padding:10px 36px 10px 14px;
+    border-radius:9px;
+    border:1px solid var(--line);
+    font-family:'Inter', sans-serif;
+    font-size:0.92rem;
+    background:var(--field);
+    color:var(--ink);
+  }
+  .search-box input:focus{ outline:2px solid var(--teal); outline-offset:1px; }
+  .search-box .clear-x{
+    position:absolute; right:8px; top:50%; transform:translateY(-50%);
+    background:none; border:none; color:var(--ink-soft); cursor:pointer;
+    font-size:1rem; padding:4px; display:none;
+  }
+  .role-chips{ display:flex; gap:8px; flex-wrap:wrap; }
+  .chip{
+    border:1px solid var(--line);
+    background:var(--paper);
+    color:var(--ink-soft);
+    padding:8px 14px;
+    border-radius:999px;
+    font-size:0.85rem;
+    font-weight:600;
+    cursor:pointer;
+    font-family:'Inter', sans-serif;
+  }
+  .chip:hover{ border-color:var(--teal); color:var(--teal-dark); }
+  .chip.active{ background:var(--teal-dark); border-color:var(--teal-dark); color:white; }
+  .chip:focus-visible{ outline:2px solid var(--orange); outline-offset:2px; }
+
+  .empty-note{
+    color:var(--ink-soft);
+    font-size:0.9rem;
+    text-align:center;
+    padding:30px 10px;
+    border:1px dashed var(--line);
+    border-radius:14px;
+  }
+
+  /* ---------- Résultats de recherche (liste plate) ---------- */
+  .search-results h2{ font-size:1.05rem; margin-bottom:14px; color:var(--ink-soft); font-family:'Inter', sans-serif; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; }
+  .result-row{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px 18px;
+    margin-bottom:12px;
+    cursor:pointer;
+    transition:border-color 0.2s ease;
+  }
+  .result-row:hover{ border-color:var(--teal); }
+  .result-row .r-top{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .result-row h3{ font-size:1.02rem; }
+  .result-row .r-parcours{ font-size:0.76rem; color:var(--ink-soft); }
+  .role-tag{
+    display:inline-block;
+    font-size:0.7rem;
+    font-weight:600;
+    padding:3px 9px;
+    border-radius:999px;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+  }
+  .role-tag.manager{ background:var(--teal-tint); color:var(--teal-dark); }
+  .role-tag.admin{ background:var(--orange-tint); color:var(--navy); }
+  .role-tag.tous{ background:#E8EFF2; color:var(--ink-soft); }
+  .result-row .r-summary{ color:var(--ink-soft); font-size:0.86rem; margin-top:8px; line-height:1.45; }
+
+  .parcours-card{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:26px 24px 22px;
+    margin-bottom:20px;
+  }
+  .parcours-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; flex-wrap:wrap; gap:8px;}
+  .parcours-head h2{ font-size:1.25rem; }
+  .parcours-head .count{ font-size:0.82rem; color:var(--ink-soft); }
+  .parcours-desc{ color:var(--ink-soft); font-size:0.88rem; margin-bottom:18px; }
+
+  .bar-track{ height:6px; background:var(--teal-tint); border-radius:4px; overflow:hidden; margin-bottom:22px; }
+  .bar-fill{ height:100%; background:linear-gradient(90deg, var(--teal), var(--teal-mid)); border-radius:4px; transition:width 0.4s ease; }
+
+  /* Sentier / trail */
+  .trail{ position:relative; display:flex; }
+  .trail-line{
+    position:absolute;
+    top:19px; left:19px; right:19px;
+    height:2px;
+    background:var(--line);
+    z-index:0;
+  }
+  .step{
+    flex:1;
+    position:relative;
+    z-index:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    cursor:pointer;
+    background:none;
+    border:none;
+    padding:0;
+    font-family:'Inter', sans-serif;
+  }
+  .step-dot{
+    width:40px; height:40px;
+    border-radius:50%;
+    background:var(--paper);
+    border:2px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:0.85rem;
+    color:var(--ink-soft);
+    margin-bottom:10px;
+    transition: all 0.2s ease;
+  }
+  .step.done .step-dot{ background:var(--teal); border-color:var(--teal); color:white; }
+  .step.active .step-dot{ border-color:var(--orange); color:var(--navy); box-shadow:0 0 0 4px var(--orange-tint); }
+  .step-title{ font-size:0.78rem; color:var(--ink-soft); max-width:110px; line-height:1.3; }
+  .step.active .step-title{ color:var(--ink); font-weight:600; }
+  .step:hover .step-dot{ border-color:var(--teal); }
+  .step:focus-visible .step-dot{ outline:2px solid var(--orange); outline-offset:2px; }
+  .step-role{ margin-top:4px; }
+
+  .player-panel{
+    margin-top:22px;
+    border-top:1px solid var(--line);
+    padding-top:20px;
+  }
+  .player-panel .p-head{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:10px;}
+  .player-panel h3{ font-size:1rem; }
+  .video-wrap{
+    position:relative;
+    padding-bottom:42%;
+    height:0;
+    border-radius:10px;
+    overflow:hidden;
+    background:linear-gradient(135deg, var(--navy), var(--teal-dark) 60%, var(--teal-mid));
+    margin-bottom:14px;
+    cursor:pointer;
+    border:none;
+    width:100%;
+    display:block;
+  }
+  .video-wrap .watch-inner{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:10px;
+    color:white;
+    font-family:'Inter', sans-serif;
+  }
+  .video-wrap .play-circle{
+    width:56px; height:56px;
+    border-radius:50%;
+    background:var(--orange);
+    border:none;
+    display:flex; align-items:center; justify-content:center;
+    transition: transform 0.2s ease;
+    box-shadow:0 6px 18px rgba(0,0,0,0.25);
+  }
+  .video-wrap:hover .play-circle{ transform:scale(1.08); }
+  .video-wrap:focus-visible{ outline:2px solid var(--orange); outline-offset:2px; }
+  .video-wrap .play-circle svg{ margin-left:3px; }
+  .video-wrap .watch-label{ font-size:0.92rem; font-weight:600; }
+  .video-wrap .watch-source{ font-size:0.76rem; opacity:0.8; text-transform:uppercase; letter-spacing:0.04em; }
+  .video-summary{ font-size:0.9rem; color:var(--ink-soft); line-height:1.5; margin-bottom:14px; }
+  .learn-more{ margin-bottom:16px; }
+  .learn-more .lm-label{ font-size:0.76rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--ink-soft); margin-bottom:8px; font-weight:600; }
+  .learn-more a{
+    display:inline-block;
+    font-size:0.85rem;
+    color:var(--teal-dark);
+    text-decoration:none;
+    border-bottom:1px solid var(--teal);
+    margin:0 14px 6px 0;
+  }
+  .learn-more a:hover{ color:var(--navy); border-color:var(--orange); }
+  .mark-done{
+    display:flex; align-items:center; gap:10px;
+    font-size:0.9rem;
+    color:var(--ink-soft);
+    cursor:pointer;
+    user-select:none;
+  }
+  .mark-done input{ width:18px; height:18px; accent-color: var(--teal-dark); cursor:pointer; }
+
+  footer.reset{ text-align:center; margin-top:10px; }
+  footer.reset button{
+    background:none; border:none; color:var(--ink-soft);
+    font-size:0.8rem; text-decoration:underline; cursor:pointer;
+  }
+  footer.reset button:hover{ color:var(--navy); }
+
+  @media (max-width:520px){
+    .trail{ flex-direction:column; gap:22px; align-items:flex-start; }
+    .trail-line{ display:none; }
+    .step{ flex-direction:row; text-align:left; gap:12px; }
+    .step-title{ max-width:none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="id-screen">
+  <div class="id-card">
+    <div class="brand">Flatchr</div>
+    <h1>Flatchr Académie</h1>
+    <p>Entre ton prénom pour retrouver ta progression (ou en démarrer une nouvelle).</p>
+    <input type="text" id="name-input" placeholder="Ton prénom" autocomplete="off">
+    <button class="btn" id="start-btn">Accéder à mes formations</button>
+  </div>
+</div>
+
+<div id="app">
+  <header class="top">
+    <div>
+      <div class="brand">Flatchr Académie</div>
+      <div class="greet">Bonjour <span id="user-name"></span></div>
+      <h1>Tes parcours de formation</h1>
+    </div>
+    <div class="global-progress">
+      <div class="pct" id="global-pct">0%</div>
+      <div class="label">Progression globale</div>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <input type="text" id="search-input" placeholder="Rechercher une vidéo (ex : rôles, membres, tour...)">
+      <button class="clear-x" id="clear-search" aria-label="Effacer la recherche">✕</button>
+    </div>
+    <div class="role-chips" id="role-chips">
+      <button class="chip active" data-role="tous">Tous</button>
+      <button class="chip" data-role="manager">Manager</button>
+      <button class="chip" data-role="admin">Admin</button>
+    </div>
+  </div>
+
+  <div id="parcours-list"></div>
+
+  <footer class="reset">
+    <button id="reset-btn">Réinitialiser ma progression</button>
+  </footer>
+</div>
+
+<script>
+(function(){
+
+  // ---------------------------------------------------------------
+  // CONTENU — remplace ou complète ces vidéos par les tiennes.
+  // Mets tes vidéos sur YouTube en "non répertorié" (youtubeId) ou
+  // garde des liens Loom (loomId = la partie après /share/ dans l'URL).
+  // role: "manager" ou "admin" -> sert au filtre.
+  // learnMore: liens vers ton centre d'aide ou ton blog.
+  // ---------------------------------------------------------------
+  const PARCOURS = [
+    {
+      id: 'decouverte',
+      title: 'Découverte de Flatchr',
+      desc: 'Un premier tour d’horizon pour prendre l’outil en main.',
+      videos: [
+        {
+          id:'v-tour-manager',
+          title:'Flatchr Tour en 10 minutes (pour les managers)',
+          loomId:'bd76fbc973c443608bba4c054442846d',
+          role:'manager',
+          summary:'Un tour d’horizon rapide de Flatchr pensé pour les managers qui découvrent l’outil : navigation dans l’interface, suivi des candidatures et actions clés au quotidien.',
+          learnMore:[
+            { label:'Quel est le rôle du manager dans le recrutement ? (blog)', url:'https://www.flatchr.io/blog/role-manager-recrutement' },
+            { label:'Comment équiper vos managers pour recruter efficacement (blog)', url:'https://www.flatchr.io/blog/comment-equiper-managers-recruter-efficacement-outils' }
+          ]
+        },
+        {
+          id:'v-activer-compte',
+          title:'Activer mon compte et comprendre le tableau de board',
+          youtubeId:'CRy6MMJxF5w',
+          role:'tous',
+          summary:'Comment activer ton compte Flatchr et te repérer dans le tableau de bord : les colonnes de candidatures, la navigation entre les offres et les premiers réflexes à prendre.',
+          learnMore:[
+            { label:'Se connecter sur Flatchr (centre d’aide)', url:'https://help.flatchr.io/fr/articles/8278101-se-connecter-sur-flatchr' }
+          ]
+        },
+        {
+          id:'v-creer-offre',
+          title:'Créer une offre d’emploi',
+          loomId:'8a39b82388a0435999f54bd50c651dbb',
+          role:'tous',
+          summary:'Les étapes pour créer et publier une offre d’emploi sur Flatchr : description du poste, paramètres de diffusion et personnalisation du formulaire de candidature.',
+          learnMore:[
+            { label:'Créer et modifier mon offre d’emploi (centre d’aide)', url:'https://help.flatchr.io/fr/articles/8181410-creer-et-modifier-mon-offre-d-emploi' },
+            { label:'Recrutez plus de candidats qualifiés avec la création d’offre Flatchr (blog)', url:'https://www.flatchr.io/blog/creer-offre-emploi-flatchr' }
+          ]
+        },
+        {
+          id:'v-fiche-candidat',
+          title:'La fiche candidat',
+          loomId:'f0247d2af9f04bcdb47400e864a79a42',
+          role:'tous',
+          summary:'Tout ce que tu trouveras sur la fiche d’un candidat : CV, échanges, notes, évaluation et historique complet de son parcours de candidature.',
+          learnMore:[
+            { label:'Tout savoir sur la fiche candidat (centre d’aide)', url:'https://help.flatchr.io/fr/articles/8278247-tout-savoir-sur-la-fiche-candidat' }
+          ]
+        },
+        {
+          id:'v-config-mails',
+          title:'Configuration Mails auto, scores, modèles',
+          loomId:'7c3e4719e59d4fd481685e0d008470db',
+          role:'admin',
+          summary:'Comment paramétrer les emails automatiques envoyés aux candidats, créer des modèles de messages réutilisables, et configurer les scores d’évaluation.',
+          learnMore:[
+            { label:'Paramétrer mes messages automatiques (centre d’aide)', url:'https://help.flatchr.io/fr/articles/8278113-parametrer-mes-messages-automatiques' },
+            { label:'Évaluer mes candidats (centre d’aide)', url:'https://help.flatchr.io/fr/articles/8278289-evaluer-mes-candidats' }
+          ]
+        }
+      ]
+    },
+    {
+      id: 'administration',
+      title: 'Administration & configuration',
+      desc: 'Paramètre les membres, les dossiers et les rôles de ton équipe.',
+      videos: [
+        {
+          id:'v-config-admin',
+          title:'Configurer membres, dossiers et rôles recrutement',
+          loomId:'e25483f6282d4297863ada6c23bb8319',
+          role:'admin',
+          summary:'Comment ajouter des membres à ton compte Flatchr, organiser tes dossiers de recrutement, et attribuer les bons rôles (admin, manager, invité) à chacun.',
+          learnMore:[
+            { label:'Restreindre la vue de vos managers (centre d’aide)', url:'https://help.flatchr.io/fr/articles/8278397-restreindre-la-vue-de-vos-managers' },
+            { label:'Nos conseils pour une configuration collaborative (centre d’aide)', url:'https://help.flatchr.io/fr/articles/8278375-nos-conseils-pour-une-configuration-collaborative' }
+          ]
+        }
+      ]
+    }
+  ];
+
+  let currentName = null;
+  let progress = {};        // { videoId: true/false }
+  let openStep = {};         // { videoId: bool }
+  let activeRole = 'tous';  // 'tous' | 'manager' | 'admin'
+  let searchQuery = '';
+
+  const idScreen = document.getElementById('id-screen');
+  const app = document.getElementById('app');
+  const nameInput = document.getElementById('name-input');
+  const startBtn = document.getElementById('start-btn');
+  const userNameEl = document.getElementById('user-name');
+  const globalPct = document.getElementById('global-pct');
+  const list = document.getElementById('parcours-list');
+  const resetBtn = document.getElementById('reset-btn');
+  const searchInput = document.getElementById('search-input');
+  const clearSearchBtn = document.getElementById('clear-search');
+  const roleChips = document.getElementById('role-chips');
+
+  function storageKey(name){ return 'progress:' + name.toLowerCase().trim(); }
+
+  async function loadProgress(name){
+    try{
+      const res = await window.storage.get(storageKey(name), false);
+      progress = res ? JSON.parse(res.value) : {};
+    }catch(e){
+      progress = {};
+    }
+  }
+
+  async function saveProgress(){
+    try{
+      await window.storage.set(storageKey(currentName), JSON.stringify(progress), false);
+    }catch(e){
+      console.error('Impossible d’enregistrer la progression', e);
+    }
+  }
+
+  function allVideos(){
+    return PARCOURS.flatMap(p => p.videos.map(v => ({...v, parcoursTitle:p.title})));
+  }
+
+  function computePct(videos){
+    if(videos.length === 0) return 0;
+    const done = videos.filter(v => progress[v.id]).length;
+    return Math.round((done / videos.length) * 100);
+  }
+
+  function matchesRole(video){
+    return activeRole === 'tous' || video.role === activeRole || video.role === 'tous';
+  }
+
+  function roleLabel(role){
+    if(role === 'admin') return 'Admin';
+    if(role === 'manager') return 'Manager';
+    return 'Tous';
+  }
+
+  function matchesSearch(video){
+    if(!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return video.title.toLowerCase().includes(q) || (video.summary || '').toLowerCase().includes(q);
+  }
+
+  function videoRowHtml(video, showParcours){
+    const isDone = !!progress[video.id];
+    return `
+      <div class="result-row" data-video="${video.id}">
+        <div class="r-top">
+          <h3>${video.title}</h3>
+          <span class="role-tag ${video.role}">${roleLabel(video.role)}</span>
+        </div>
+        ${showParcours ? `<div class="r-parcours">${video.parcoursTitle}${isDone ? ' · terminée ✓' : ''}</div>` : ''}
+        <p class="r-summary">${video.summary || ''}</p>
+      </div>
+    `;
+  }
+
+  function render(){
+    userNameEl.textContent = currentName;
+    globalPct.textContent = computePct(allVideos()) + '%';
+    list.innerHTML = '';
+
+    // ---- Mode recherche : liste plate de résultats ----
+    if(searchQuery){
+      const matches = allVideos().filter(v => matchesRole(v) && matchesSearch(v));
+      const wrap = document.createElement('div');
+      wrap.className = 'search-results';
+      if(matches.length === 0){
+        wrap.innerHTML = `<div class="empty-note">Aucune vidéo ne correspond à “${searchQuery}”.</div>`;
+      } else {
+        wrap.innerHTML = `<h2>${matches.length} résultat${matches.length > 1 ? 's' : ''}</h2>` +
+          matches.map(v => videoRowHtml(v, true)).join('');
+      }
+      list.appendChild(wrap);
+      wrap.querySelectorAll('.result-row').forEach(row => {
+        row.addEventListener('click', () => {
+          const vid = row.getAttribute('data-video');
+          searchQuery = '';
+          searchInput.value = '';
+          clearSearchBtn.style.display = 'none';
+          openStep = { [vid]: true };
+          render();
+          setTimeout(() => {
+            document.getElementById('panel-' + vid)?.scrollIntoView({behavior:'smooth', block:'center'});
+          }, 60);
+        });
+      });
+      return;
+    }
+
+    // ---- Mode normal : parcours + sentier, filtrés par rôle ----
+    let anyVisible = false;
+
+    PARCOURS.forEach(parcours => {
+      const visibleVideos = parcours.videos.filter(matchesRole);
+      if(visibleVideos.length === 0) return;
+      anyVisible = true;
+
+      const done = visibleVideos.filter(v => progress[v.id]).length;
+      const pct = computePct(visibleVideos);
+
+      const card = document.createElement('div');
+      card.className = 'parcours-card';
+
+      card.innerHTML = `
+        <div class="parcours-head">
+          <h2>${parcours.title}</h2>
+          <span class="count mono">${done}/${visibleVideos.length} vidéo${visibleVideos.length > 1 ? 's' : ''}</span>
+        </div>
+        <p class="parcours-desc">${parcours.desc}</p>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <div class="trail">
+          <div class="trail-line"></div>
+        </div>
+      `;
+
+      const trail = card.querySelector('.trail');
+      visibleVideos.forEach((video, i) => {
+        const isDone = !!progress[video.id];
+        const isOpen = !!openStep[video.id];
+        const step = document.createElement('button');
+        step.className = 'step' + (isDone ? ' done' : '') + (isOpen ? ' active' : '');
+        step.innerHTML = `
+          <span class="step-dot">${isDone ? '✓' : (i+1)}</span>
+          <span class="step-title">${video.title}</span>
+          <span class="role-tag ${video.role} step-role">${roleLabel(video.role)}</span>
+        `;
+        step.addEventListener('click', () => {
+          const wasOpen = !!openStep[video.id];
+          openStep = {};
+          if(!wasOpen){ openStep[video.id] = true; }
+          render();
+          if(!wasOpen){
+            setTimeout(() => {
+              document.getElementById('panel-' + video.id)?.scrollIntoView({behavior:'smooth', block:'center'});
+            }, 50);
+          }
+        });
+        trail.appendChild(step);
+      });
+
+      const openVideo = visibleVideos.find(v => openStep[v.id]);
+      if(openVideo){
+        const panel = document.createElement('div');
+        panel.className = 'player-panel';
+        panel.id = 'panel-' + openVideo.id;
+        const learnMoreHtml = (openVideo.learnMore && openVideo.learnMore.length)
+          ? `<div class="learn-more">
+               <div class="lm-label">Pour aller plus loin</div>
+               ${openVideo.learnMore.map(l => `<a href="${l.url}" target="_blank" rel="noopener">${l.label}</a>`).join('')}
+             </div>`
+          : '';
+        panel.innerHTML = `
+          <div class="p-head">
+            <h3>${openVideo.title}</h3>
+            <span class="role-tag ${openVideo.role}">${roleLabel(openVideo.role)}</span>
+          </div>
+          <p class="video-summary">${openVideo.summary || ''}</p>
+          <div class="video-wrap" role="button" tabindex="0" aria-label="Ouvrir la vidéo ${openVideo.title}">
+            <div class="watch-inner">
+              <span class="play-circle">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+              </span>
+              <span class="watch-label">Regarder la vidéo</span>
+              <span class="watch-source">${openVideo.youtubeId ? 'Ouvre sur YouTube' : 'Ouvre sur Loom'}</span>
+            </div>
+          </div>
+          ${learnMoreHtml}
+          <label class="mark-done">
+            <input type="checkbox" ${progress[openVideo.id] ? 'checked' : ''} data-video="${openVideo.id}">
+            J’ai terminé cette vidéo
+          </label>
+        `;
+        card.appendChild(panel);
+        const watchUrl = openVideo.youtubeId
+          ? 'https://www.youtube.com/watch?v=' + openVideo.youtubeId
+          : 'https://www.loom.com/share/' + openVideo.loomId;
+        const watchTile = panel.querySelector('.video-wrap');
+        const openVideoTab = () => window.open(watchUrl, '_blank', 'noopener');
+        watchTile.addEventListener('click', openVideoTab);
+        watchTile.addEventListener('keydown', (e) => {
+          if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openVideoTab(); }
+        });
+        panel.querySelector('input').addEventListener('change', async (e) => {
+          progress[openVideo.id] = e.target.checked;
+          await saveProgress();
+          render();
+        });
+      }
+
+      list.appendChild(card);
+    });
+
+    if(!anyVisible){
+      list.innerHTML = `<div class="empty-note">Aucune vidéo pour ce filtre pour l’instant.</div>`;
+    }
+  }
+
+  async function start(){
+    const name = nameInput.value.trim();
+    if(!name) { nameInput.focus(); return; }
+    currentName = name;
+    await loadProgress(name);
+    idScreen.style.display = 'none';
+    app.style.display = 'block';
+    render();
+  }
+
+  startBtn.addEventListener('click', start);
+  nameInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') start(); });
+
+  searchInput.addEventListener('input', (e) => {
+    searchQuery = e.target.value.trim();
+    clearSearchBtn.style.display = searchQuery ? 'block' : 'none';
+    render();
+  });
+  clearSearchBtn.addEventListener('click', () => {
+    searchQuery = '';
+    searchInput.value = '';
+    clearSearchBtn.style.display = 'none';
+    render();
+  });
+
+  roleChips.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      activeRole = chip.getAttribute('data-role');
+      roleChips.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      render();
+    });
+  });
+
+  resetBtn.addEventListener('click', async () => {
+    if(!confirm('Réinitialiser toute ta progression ?')) return;
+    progress = {};
+    openStep = {};
+    await saveProgress();
+    render();
+  });
+
+})();
+</script>
+</body>
+</html>
