@@ -388,11 +388,53 @@
   // ---------------------------------------------------------------
   // CONTENU — remplace ou complète ces vidéos par les tiennes.
   // Mets tes vidéos sur YouTube en "non répertorié" (youtubeId) ou
-  // garde des liens Loom (loomId = la partie après /share/ dans l'URL).
+  // garde des liens Loom (loomId = la partie après /share/ dans l'URL),
+  // ou Google Drive (driveId = la partie après /file/d/ dans l'URL).
   // role: "manager" ou "admin" -> sert au filtre.
   // learnMore: liens vers ton centre d'aide ou ton blog.
   // ---------------------------------------------------------------
   const PARCOURS = [
+    {
+      id: 'essentiels',
+      title: 'Les essentiels Flatchr',
+      desc: 'La série Flatchr Académie en 4 épisodes, à suivre dans l’ordre.',
+      videos: [
+        {
+          id:'fa-1-premiers-pas',
+          title:'Premiers pas avec Flatchr',
+          driveId:'1_Uj3DmhOb9jTV71WflJkzHO-KnbF39Fz',
+          role:'tous',
+          summary:'Ta première connexion à Flatchr : l’interface, la navigation et les réflexes à prendre pour bien démarrer.',
+          learnMore:[
+            { label:'Se connecter sur Flatchr (centre d’aide)', url:'https://help.flatchr.io/fr/articles/8278101-se-connecter-sur-flatchr' }
+          ]
+        },
+        {
+          id:'fa-2-dashboard',
+          title:'Le nouveau Dashboard',
+          driveId:'1ozW8doS-8zJFnVcd_SPxbKPvvMuXw22j',
+          role:'tous',
+          summary:'Tour du nouveau tableau de bord : où retrouver tes offres, tes candidatures et les actions à traiter en priorité.'
+        },
+        {
+          id:'fa-3-configurer-espace',
+          title:'Configurer ton espace Flatchr',
+          driveId:'1_yw-T8xPhbEIUOk9xqs-H1QO15PItQZB',
+          role:'admin',
+          summary:'Les réglages de ton espace Flatchr pour l’adapter à ton organisation et à ta façon de recruter.',
+          learnMore:[
+            { label:'Nos conseils pour une configuration collaborative (centre d’aide)', url:'https://help.flatchr.io/fr/articles/8278375-nos-conseils-pour-une-configuration-collaborative' }
+          ]
+        },
+        {
+          id:'fa-4-kanban',
+          title:'Gérer ses candidats avec le Kanban',
+          driveId:'1xqWXlNU1dihdPrHq1geX83ZiGkrI1-pV',
+          role:'tous',
+          summary:'Faire avancer tes candidats d’étape en étape dans la vue Kanban et garder une vision claire de chaque recrutement.'
+        }
+      ]
+    },
     {
       id: 'decouverte',
       title: 'Découverte de Flatchr',
@@ -657,9 +699,11 @@
         const panel = document.createElement('div');
         panel.className = 'player-panel';
         panel.id = 'panel-' + openVideo.id;
-        const watchUrl = openVideo.youtubeId
-          ? 'https://www.youtube.com/watch?v=' + openVideo.youtubeId
-          : 'https://www.loom.com/share/' + openVideo.loomId;
+        const watchUrl = openVideo.driveId
+          ? 'https://drive.google.com/file/d/' + openVideo.driveId + '/view'
+          : openVideo.youtubeId
+            ? 'https://www.youtube.com/watch?v=' + openVideo.youtubeId
+            : 'https://www.loom.com/share/' + openVideo.loomId;
         const learnMoreHtml = (openVideo.learnMore && openVideo.learnMore.length)
           ? `<div class="learn-more">
                <div class="lm-label">Pour aller plus loin</div>
@@ -678,7 +722,7 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
               </span>
               <span class="watch-label">Regarder la vidéo</span>
-              <span class="watch-source">${openVideo.youtubeId ? 'Ouvre sur YouTube' : 'Ouvre sur Loom'}</span>
+              <span class="watch-source">${openVideo.driveId ? 'Ouvre sur Google Drive' : openVideo.youtubeId ? 'Ouvre sur YouTube' : 'Ouvre sur Loom'}</span>
             </div>
           </a>
           ${learnMoreHtml}
