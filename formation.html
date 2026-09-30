@@ -300,6 +300,14 @@
   .video-wrap:focus-visible{ outline:2px solid var(--orange); outline-offset:2px; }
   .video-wrap .play-circle svg{ margin-left:3px; }
   .video-wrap .watch-label{ font-size:0.92rem; font-weight:600; }
+  .video-embed{
+    position:relative; padding-bottom:56.25%; height:0;
+    border-radius:10px; overflow:hidden; background:var(--navy);
+    margin-bottom:8px; max-width:100%;
+  }
+  .video-embed iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
+  .embed-fallback{ display:inline-block; font-size:0.8rem; color:var(--teal-dark); margin-bottom:14px; }
+  .embed-fallback:hover{ color:var(--navy); }
   .video-wrap .watch-source{ font-size:0.76rem; opacity:0.8; text-transform:uppercase; letter-spacing:0.04em; }
   .video-summary{ font-size:0.9rem; color:var(--ink-soft); line-height:1.5; margin-bottom:14px; }
   .learn-more{ margin-bottom:16px; }
@@ -515,6 +523,9 @@
     }
   ];
 
+  // Lecteur intégré partout, sauf dans les pages Claude (qui bloquent les iframes)
+  const CAN_EMBED = !/claude/i.test(location.hostname);
+
   let currentName = null;
   let progress = {};        // { videoId: true/false }
   let openStep = {};         // { videoId: bool }
@@ -704,6 +715,26 @@
           : openVideo.youtubeId
             ? 'https://www.youtube.com/watch?v=' + openVideo.youtubeId
             : 'https://www.loom.com/share/' + openVideo.loomId;
+        const embedUrl = openVideo.driveId
+          ? 'https://drive.google.com/file/d/' + openVideo.driveId + '/preview'
+          : openVideo.youtubeId
+            ? 'https://www.youtube-nocookie.com/embed/' + openVideo.youtubeId
+            : 'https://www.loom.com/embed/' + openVideo.loomId;
+        const sourceName = openVideo.driveId ? 'Google Drive' : openVideo.youtubeId ? 'YouTube' : 'Loom';
+        const playerHtml = CAN_EMBED
+          ? `<div class="video-embed">
+               <iframe src="${embedUrl}" title="${openVideo.title}" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+             </div>
+             <a class="embed-fallback" href="${watchUrl}" target="_blank" rel="noopener">La vidéo ne s’affiche pas ? L’ouvrir sur ${sourceName} ↗</a>`
+          : `<a class="video-wrap" href="${watchUrl}" target="_blank" rel="noopener" aria-label="Ouvrir la vidéo ${openVideo.title}">
+            <div class="watch-inner">
+              <span class="play-circle">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
+              </span>
+              <span class="watch-label">Regarder la vidéo</span>
+              <span class="watch-source">Ouvre sur ${sourceName}</span>
+            </div>
+          </a>`;
         const learnMoreHtml = (openVideo.learnMore && openVideo.learnMore.length)
           ? `<div class="learn-more">
                <div class="lm-label">Pour aller plus loin</div>
@@ -716,15 +747,7 @@
             <span class="role-tag ${openVideo.role}">${roleLabel(openVideo.role)}</span>
           </div>
           <p class="video-summary">${openVideo.summary || ''}</p>
-          <a class="video-wrap" href="${watchUrl}" target="_blank" rel="noopener" aria-label="Ouvrir la vidéo ${openVideo.title}">
-            <div class="watch-inner">
-              <span class="play-circle">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
-              </span>
-              <span class="watch-label">Regarder la vidéo</span>
-              <span class="watch-source">${openVideo.driveId ? 'Ouvre sur Google Drive' : openVideo.youtubeId ? 'Ouvre sur YouTube' : 'Ouvre sur Loom'}</span>
-            </div>
-          </a>
+          ${playerHtml}
           ${learnMoreHtml}
           <label class="mark-done">
             <input type="checkbox" ${progress[openVideo.id] ? 'checked' : ''} data-video="${openVideo.id}">
